@@ -10,6 +10,10 @@
   "default_locale": "en",
   "background": {
     "scripts": [
+      "libs/lodash.js",
+      "libs/jquery.js",
+      "libs/moment.js",
+      "scripts/config.js",
       "scripts/chromereload.js",
       "scripts/background.js"
     ]
@@ -31,7 +35,13 @@
       "js": [
         "libs/lodash.js",
         "libs/jquery.js",
+        "libs/moment.js",
+        "scripts/config.js",
         "scripts/contentscript.js"
+      ],
+      "css" : [
+        "styles/hint.css",
+        "styles/inject.css"
       ],
       "run_at": "document_end",
       "all_frames": false

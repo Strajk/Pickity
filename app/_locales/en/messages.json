@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "imigy-pickity",
+    "message": "Pickity",
     "description": "The name of the application"
   },
   "appDescription": {
-    "message": "My Chrome Extension",
+    "message": "Searching for geolocations inside the webpage and showing for how much you can get there.",
     "description": "The description of the application"
   }
 }

@@ -1,0 +1,75 @@
+.PICKITY-wrapper {
+  position: relative;
+}
+
+/* Overlay */
+.PICKITY-wrapper .-cx-PRIVATE-Photo__root::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  top: 0; bottom: 0;
+  background: rgba(0, 0, 0, .3);
+  pointer-events: none;
+}
+
+.PICKITY-title {
+  position: absolute;
+  top: 20px;
+  left: 0; right: 0;
+  text-align: center;
+  font-weight: bold;
+  color: white;
+}
+
+.PICKITY-location {
+  font-size: 120%;
+}
+
+.PICKITY-price {
+  margin-top: 5px;
+}
+
+.PICKITY-price small {
+  display: inline;
+  font-size: 70%;
+}
+
+.PICKITY-graph {
+  position: absolute;
+  height: 50%; max-height: 150px;
+  bottom: 12px;
+  left: 5px; right: 5px;
+}
+
+.PICKITY-graph::before, .PICKITY-graph::after {
+  content: "before";
+  position: absolute;
+  bottom: -10px;
+  font-size: 12px; color: white;
+
+}
+
+.PICKITY-graph::before {
+  content: "▴ today";
+  left: 5px;
+
+}
+
+.PICKITY-graph::after {
+  content: "30 days from now ▴";
+  right: 5px;
+}
+
+.PICKITY-bar {
+  display: block;
+  position: absolute;
+  bottom: 5px;
+  height: 0; /* Dynamically changed */
+  background: white;
+  opacity: .7;
+  border-bottom: 1px solid white;
+}
+
+.PICKITY-bar:hover {
+  opacity: 1;
+}

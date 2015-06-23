@@ -1,87 +1,124 @@
 'use strict';
 
+// Debugging
 chrome.runtime.onInstalled.addListener(function (details) {
   console.log('previousVersion', details.previousVersion);
 });
 
 
-chrome.browserAction.setBadgeText({text: '\'Allo'});
+chrome.browserAction.setBadgeText({text: window.CONFIG.origin});
 
 
 chrome.runtime.onMessage.addListener(function (req, sender, sendResponse) {
   if (sender.tab) {
-    console.log("Msg received, from content script", sender.tab.url);
     if (req.action === "search") {
       onSearch(req, sendResponse);
+      return true; // Keep waiting for async
     }
   }
-
 });
 
 
-function mapLocationStringToLocationGeo(locationString, cb) {
-  if (locationString === "Hollywood California") {
-    // TODO: Implement
+function geocode(input, cb) {
+  var mock = false;
+
+  if (mock) {
+
     cb({
       lat: 34.0928092,
-      lon: 118.32866139999999
-    })
+      lng: 118.32866139999999
+    });
+
   } else {
-    cb(new Error("Uknown location"));
+
+    console.log("geocode: " + input);
+    $.ajax({
+      url: "https://maps.googleapis.com/maps/api/geocode/json",
+      data: {
+        address: input,
+        key: window.CONFIG.googleApiKey
+      }
+    }).done(function (res) {
+      if (_.isArray(res.results) && res.results.length) {
+        // TODO: Let user choose
+        var formatted = res.results[0]["formatted_address"];
+        var geo = res.results[0].geometry.location;
+        console.info("geocode success: " + formatted);
+        cb(geo);
+      } else {
+        console.warn("geocode failed");
+        // cb();
+      }
+    });
+
   }
 }
 
-function callFlightsApi(geo, cb) {
-  /*
-   https://api.skypicker.com/flights?v=2
-   &sort=price
-   &asc=1
-   &locale=en
-   &daysInDestinationFrom=
-   &daysInDestinationTo=
-   &affilid=
-   &flyFrom=BRQ
-   &radiusTo=250
-   &latitudeTo=56.04749958329888
-   &longitudeTo=18.0615234375
-   &dateFrom=01%2F07%2F2015
-   &dateTo=31%2F07%2F2015
-   &typeFlight=oneway
-   &returnFrom=
-   &returnTo=
-   &one_per_date=1
-   &adults=1
-   &children=0
-   &infants=0
-  */
 
-  /*
-    lights.reduce((prev, flight) => {
-    var dateIndex = moment.utc(flight.dTime*1000).format("YYYYMMDD");
-    if (prev.get(dateIndex) && prev.get(dateIndex) < flight.price) {
-      return prev;
-    } else {
-      return prev.set(dateIndex, new DayPrice({price: flight.price, journey: flightsApiToJourney(flight)}));
-    }
-   */
+function prices(geo, cb) {
+  var mock = false;
 
-  cb({
-    1: 10,
-    2: 20,
-    3: 30,
-    4: 25,
-    5: 20,
-    6: 15,
-    7: 10,
-    8: 8,
-    9: 5
-  });
+  if (!mock) {
+
+    console.log("prices: ", geo);
+    $.ajax({
+      url: "https://api.skypicker.com/flights",
+      data: {
+        v: 2, locale: "en",
+        sort: "price", asc: 1,
+        flyFrom: window.CONFIG.origin,
+        latitudeTo: geo.lat, longitudeTo: geo.lng,
+        radiusTo: window.CONFIG.destionationRadius,
+        dateFrom: moment().format("DD/MM/YYYY"),
+        dateTo: moment().add(window.CONFIG.days, "days").format("DD/MM/YYYY"),
+        typeFlight: "oneway", one_per_date: 1,
+        adults: window.CONFIG.passengers
+      }
+    }).done(function (res) {
+      var prices = {};
+
+      var flights = res.data;
+      console.log("prices complete: " + res.data.length);
+      flights.forEach(function(flight) {
+        var dateStr = moment.utc(flight.dTime * 1000).format("YYYYMMDD");
+        var price = flight.price;
+        if (!prices[dateStr] || flights[dateStr] > price) {
+          prices[dateStr] = price;
+        }
+      });
+      cb(prices);
+    });
+
+  } else {
+
+    cb({
+      "20150622": 2304.56,
+      "20150624": 2051.03,
+      "20150629": 2296.12,
+      "20150701": 1950.09,
+      "20150703": 2726.58
+    });
+
+  }
+
 }
 
 function onSearch(req, sendResponse) {
-  mapLocationStringToLocationGeo(req.locationString, function (geo) {
-    callFlightsApi(geo, function (prices) {
-      sendResponse(prices)
+  if (req.geo) {
+    prices(req.geo, function (prices) {
+      sendResponse({
+        prices: prices,
+        geo: req.geo
+      })
     });
-  });
+  } else {
+    geocode(req.location, function (geo) {
+      prices(geo, function (prices) {
+        sendResponse({
+          prices: prices,
+          geo: geo
+        })
+      });
+    });
+  }
 }
